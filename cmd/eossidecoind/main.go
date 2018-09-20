@@ -29,11 +29,11 @@ func main() {
 	}
 
 	server.AddCommands(ctx, cdc, rootCmd, server.DefaultAppInit,
-		server.ConstructAppCreator(newApp, "basecoin"),
-		server.ConstructAppExporter(exportAppStateAndTMValidators, "basecoin"))
+		server.ConstructAppCreator(newApp, "eossidecoind"),
+		server.ConstructAppExporter(exportAppStateAndTMValidators, "eossidecoind"))
 
 	// prepare and add flags
-	rootDir := os.ExpandEnv("$HOME/.basecoind")
+	rootDir := os.ExpandEnv("$HOME/.eossidecoind")
 	executor := cli.PrepareBaseCmd(rootCmd, "BC", rootDir)
 
 	err := executor.Execute()
@@ -44,10 +44,10 @@ func main() {
 }
 
 func newApp(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Application {
-	return app.NewBasecoinApp(logger, db, baseapp.SetPruning(viper.GetString("pruning")))
+	return app.NewEossidecoindApp(logger, db, baseapp.SetPruning(viper.GetString("pruning")))
 }
 
 func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer) (json.RawMessage, []tmtypes.GenesisValidator, error) {
-	bapp := app.NewBasecoinApp(logger, db)
+	bapp := app.NewEossidecoindApp(logger, db)
 	return bapp.ExportAppStateAndValidators()
 }

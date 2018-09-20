@@ -5,7 +5,7 @@ import (
 	"bytes"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/examples/basecoin/types"
+	"github.com/blockchain-develop/eosside/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -19,14 +19,14 @@ import (
 )
 
 const (
-	appName = "BasecoinApp"
+	appName = "EossidecoindApp"
 )
 
-// BasecoinApp implements an extended ABCI application. It contains a BaseApp,
+// EossidecoindApp implements an extended ABCI application. It contains a BaseApp,
 // a codec for serialization, KVStore keys for multistore state management, and
 // various mappers and keepers to manage getting, setting, and serializing the
 // integral app types.
-type BasecoinApp struct {
+type EossidecoindApp struct {
 	*bam.BaseApp
 	cdc *wire.Codec
 
@@ -42,17 +42,17 @@ type BasecoinApp struct {
 	ibcMapper           ibc.Mapper
 }
 
-// NewBasecoinApp returns a reference to a new BasecoinApp given a logger and
+// NewEossidecoindApp returns a reference to a new EossidecoindApp given a logger and
 // database. Internally, a codec is created along with all the necessary keys.
 // In addition, all necessary mappers and keepers are created, routes
 // registered, and finally the stores being mounted along with any necessary
 // chain initialization.
-func NewBasecoinApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp)) *BasecoinApp {
+func NewEossidecoindApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.BaseApp)) *EossidecoindApp {
 	// create and register app-level codec for TXs and accounts
 	cdc := MakeCodec()
 
 	// create your application type
-	var app = &BasecoinApp{
+	var app = &EossidecoindApp{
 		cdc:        cdc,
 		BaseApp:    bam.NewBaseApp(appName, cdc, logger, db, baseAppOptions...),
 		keyMain:    sdk.NewKVStoreKey("main"),
@@ -113,13 +113,13 @@ func MakeCodec() *wire.Codec {
 
 // BeginBlocker reflects logic to run before any TXs application are processed
 // by the application.
-func (app *BasecoinApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) abci.ResponseBeginBlock {
+func (app *EossidecoindApp) BeginBlocker(_ sdk.Context, _ abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return abci.ResponseBeginBlock{}
 }
 
 // EndBlocker reflects logic to run after all TXs are processed by the
 // application.
-func (app *BasecoinApp) EndBlocker(_ sdk.Context, _ abci.RequestEndBlock) abci.ResponseEndBlock {
+func (app *EossidecoindApp) EndBlocker(_ sdk.Context, _ abci.RequestEndBlock) abci.ResponseEndBlock {
 	return abci.ResponseEndBlock{}
 }
 
@@ -128,7 +128,7 @@ func (app *BasecoinApp) EndBlocker(_ sdk.Context, _ abci.RequestEndBlock) abci.R
 // state provided by 'req' and attempt to deserialize said state. The state
 // should contain all the genesis accounts. These accounts will be added to the
 // application's account mapper.
-func (app *BasecoinApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
+func (app *EossidecoindApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	stateJSON := req.AppStateBytes
 
 	genesisState := new(types.GenesisState)
@@ -208,7 +208,7 @@ func (app *BasecoinApp) initChainer(ctx sdk.Context, req abci.RequestInitChain) 
 // ExportAppStateAndValidators implements custom application logic that exposes
 // various parts of the application's state and set of validators. An error is
 // returned if any step getting the state or set of validators fails.
-func (app *BasecoinApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
+func (app *EossidecoindApp) ExportAppStateAndValidators() (appState json.RawMessage, validators []tmtypes.GenesisValidator, err error) {
 	ctx := app.NewContext(true, abci.Header{})
 	accounts := []*types.GenesisAccount{}
 
