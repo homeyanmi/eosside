@@ -122,7 +122,7 @@ OUTER:
 			Code: "pegzone",
 			Scope: "pegzone",
 			Table: "transferinfo",
-			LowerBound: strconv.FormatInt(int64, ingressSequence),
+			LowerBound: strconv.FormatInt(ingressSequence, 10),
 		}
 
 		gettable_response, eos_err := eos_api.GetTableRows(gettable_request)
