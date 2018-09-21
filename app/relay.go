@@ -15,12 +15,9 @@ import (
 	wire "github.com/cosmos/cosmos-sdk/wire"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	"github.com/cosmos/cosmos-sdk/x/bank"
 	abci "github.com/tendermint/tendermint/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
-	"github.com/blockchain-develop/relay-eos-side/types"
 	eos "github.com/eoscanada/eos-go"
-	"github.com/blockchain-develop/relay-eos-side/x/ibc"
 )
 
 const (
