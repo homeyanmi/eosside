@@ -30,6 +30,7 @@ type eostransfer struct {
 	id int64
 	from string
 	to string
+	quantity string
 	memo string
 }
 
@@ -120,7 +121,7 @@ OUTER:
 		gettable_request := eos.GetTableRowsRequest {
 			Code: "pegzone",
 			Scope: "pegzone",
-			Table: "actioninfo",
+			Table: "transferinfo",
 			LowerBound: strconv.FormatInt(int64, ingressSequence),
 		}
 
@@ -153,7 +154,14 @@ OUTER:
 		seq := (c.getSequence(toChainNode))
 		//c.logger.Info("broadcast tx seq", "number", seq)
 
-		for i, _ := range transfers {
+		for i, tran := range transfers {
+			
+			
+			c.logger.Info("eos transfer", "id", tran.id)
+			c.logger.Info("eos transfer", "from", tran.from)
+			c.logger.Info("eos transfer", "to", tran.to)
+			c.logger.Info("eos transfer", "quantity", tran.quantity)
+			c.logger.Info("eos transfer", "memo", tran.memo)
 			
 			//
 			ibc_msg := ibc.Transfer{
