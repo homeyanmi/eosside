@@ -103,7 +103,7 @@ func MakeCodec() *wire.Codec {
     auth.RegisterWire(cdc)
 
 	// register custom types
-	cdc.RegisterConcrete(&types.AppAccount{}, "basecoin/Account", nil)
+	cdc.RegisterConcrete(&types.AppAccount{}, "eosside/Account", nil)
 
 	cdc.Seal()
 
