@@ -18,6 +18,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	eos "github.com/eoscanada/eos-go"
+	"github.com/blockchain-develop/eosside/x/ibc"
 )
 
 const (
