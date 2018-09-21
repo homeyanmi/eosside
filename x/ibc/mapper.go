@@ -2,13 +2,10 @@ package ibc
 
 import (
 	"fmt"
-	"os"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
 	//abci "github.com/tendermint/tendermint/abci/types"
-	tmsdk "github.com/tendermint/tendermint/types"
-	"github.com/tendermint/tendermint/libs/log"
 )
 
 // IBC Mapper
@@ -58,5 +55,23 @@ func (ibcm Mapper) SetIngressSequence(ctx sdk.Context, sequence int64) {
 
 	bz := marshalBinaryPanic(ibcm.cdc, sequence)
 	store.Set(key, bz)
+}
+
+// --------------------------
+// Functions for accessing the underlying KVStore.
+
+func marshalBinaryPanic(cdc *wire.Codec, value interface{}) []byte {
+	res, err := cdc.MarshalBinary(value)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
+func unmarshalBinaryPanic(cdc *wire.Codec, bz []byte, ptr interface{}) {
+	err := cdc.UnmarshalBinary(bz, ptr)
+	if err != nil {
+		panic(err)
+	}
 }
 

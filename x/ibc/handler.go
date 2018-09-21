@@ -3,14 +3,10 @@ package ibc
 import (
 	"reflect"
 	"os"
-	"bytes"
-	"fmt"
 
 	"github.com/tendermint/tendermint/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/bank"
-	tmsdk "github.com/tendermint/tendermint/types"
-	"github.com/tendermint/iavl"
 )
 
 func NewHandler(ibcm Mapper, ck bank.Keeper) sdk.Handler {
@@ -46,7 +42,7 @@ func handleIBCRelayMsg(ctx sdk.Context, ibcm Mapper, ck bank.Keeper, msg IBCRela
 	ibcm.SetIngressSequence(ctx, seq+1)
 	
 	//
-	switch msg.MsgType {
+	switch msg.PayloadType {
 	case TRANSFER:
 	    var transfer *Transfer
 		err := ibcm.cdc.UnmarshalBinary(msg.Payload, &transfer)
