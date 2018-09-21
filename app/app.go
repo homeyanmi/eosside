@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"bytes"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/blockchain-develop/eosside/types"
