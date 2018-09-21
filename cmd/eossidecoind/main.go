@@ -7,7 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 
-	"github.com/cosmos/cosmos-sdk/examples/basecoin/app"
+	"github.com/blockchain-develop/eosside/app"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
