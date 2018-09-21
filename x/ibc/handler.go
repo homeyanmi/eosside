@@ -31,12 +31,20 @@ func NewHandler(ibcm Mapper, ck bank.Keeper) sdk.Handler {
 
 // IBCTransferMsg deducts coins from the account and creates an egress IBC packet.
 func handleIBCRelayMsg(ctx sdk.Context, ibcm Mapper, ck bank.Keeper, msg IBCRelayMsg) sdk.Result {
-	
 	//
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 	logger.Info("IBC msg type : ", "string", "IBCRelayMsg")
 	logger.Info("relay msg type : ", "string", msg.PayloadType)
 
+	//
+	seq := ibcm.GetIngressSequence(ctx)
+	if msg.Sequence != seq {
+		return ErrInvalidSequence(ibcm.codespace).Result()
+	}
+	
+	//
+	ibcm.SetIngressSequence(ctx, seq+1)
+	
 	//
 	switch msg.MsgType {
 	case TRANSFER:

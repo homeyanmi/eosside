@@ -22,6 +22,7 @@ func init() {
 type IBCRelayMsg struct {
 	PayloadType    int64
 	Payload        []byte
+	Sequence       int64
 	Relayer        sdk.AccAddress
 }
 
