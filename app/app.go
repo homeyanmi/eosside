@@ -149,58 +149,6 @@ func (app *EossidecoindApp) initChainer(ctx sdk.Context, req abci.RequestInitCha
 		app.accountMapper.SetAccount(ctx, acc)
 	}
 	
-	/*
-	//
-	registerGenesis := "/root/gopath/src/github.com/cosmos/cosmos-sdk/lcv/basecoinlcvx/genesis.json"
-	
-	//
-	genesisBytes, err := ioutil.ReadFile(registerGenesis)
-	if err != nil {
-		panic(err)
-	}
-	
-	var chainGenDoc *tmsdk.GenesisDoc
-	err = app.cdc.UnmarshalJSON(genesisBytes, &chainGenDoc)
-	if err != nil {
-		panic(err)
-	}
-	
-	varlidators := make([]*tmsdk.Validator, len(chainGenDoc.Validators))
-	for i, val := range chainGenDoc.Validators {
-		pubKey := val.PubKey
-		address := pubKey.Address()
-		varlidators[i] = &tmsdk.Validator{
-			Address: address,
-			PubKey: pubKey,
-			VotingPower: val.Power,
-		}
-	}
-	*/
-	//ibc.InitGenesis(ctx, app.ibcMapper, req.ChainId, req.Validators)
-	//ibc.InitGenesisx(ctx, app.ibcMapper, req.ChainId, varlidators)
-	
-	validators := make([]*tmtypes.Validator, len(req.Validators))
-	for i, val := range req.Validators {
-		pubkey, err := tmtypes.PB2TM.PubKey(val.PubKey)
-		if err != nil {
-			panic(err)
-		}
-		
-		address := pubkey.Address()
-		if bytes.Equal(address, val.Address) == false {
-			panic(err)
-		}
-		
-		validators[i] = &tmtypes.Validator {
-			Address: address,
-			PubKey: pubkey,
-			VotingPower: val.Power,
-		}
-	}
-	
-	//
-	ibc.InitGenesis(ctx, app.ibcMapper, req.ChainId, validators)
-	
 	//
 	return abci.ResponseInitChain{}
 }
