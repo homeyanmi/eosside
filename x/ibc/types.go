@@ -2,7 +2,6 @@ package ibc
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tmsdk "github.com/tendermint/tendermint/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
 )
 
