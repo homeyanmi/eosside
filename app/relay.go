@@ -185,7 +185,7 @@ OUTER:
 			relay_msg := ibc.IBCRelayMsg {
             	PayloadType: ibc.TRANSFER,
             	Payload: bz,
-            	Sequence: int64(ingressSequence + i),
+            	Sequence: ingressSequence + int64(i),
             	Relayer: from,
             }
 			
