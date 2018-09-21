@@ -4,6 +4,7 @@ import (
 	"os"
 	"time"
 	"fmt"
+	"strconv"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -120,7 +121,7 @@ OUTER:
 			Code: "pegzone",
 			Scope: "pegzone",
 			Table: "actioninfo",
-			LowerBound: "1",
+			LowerBound: strconv.FormatInt(int64, ingressSequence),
 		}
 
 		gettable_response, eos_err := eos_api.GetTableRows(gettable_request)
@@ -176,7 +177,7 @@ OUTER:
 			relay_msg := ibc.IBCRelayMsg {
             	PayloadType: ibc.TRANSFER,
             	Payload: bz,
-            	Sequence: int64(i),
+            	Sequence: int64(ingressSequence + i),
             	Relayer: from,
             }
 			
@@ -191,7 +192,7 @@ OUTER:
 			}
 
 			//
-			c.logger.Info("broadcast tx, type : newibcpacket, sequence : ", "int", seq)
+			c.logger.Info("broadcast tx, type : transfer, sequence : ", "int", seq)
 			
 			//
 			err = c.broadcastTx(seq, toChainNode, xx_res)
