@@ -26,8 +26,8 @@ type IBCRelayMsg struct {
 }
 
 const (
-	TRANSFER   	= 1,
-	RETRANSFER  = 2,
+	TRANSFER   	= 1
+	RETRANSFER  = 2
 )
 
 type Transfer struct {

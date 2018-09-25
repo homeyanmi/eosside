@@ -298,7 +298,7 @@ func (c relayCommander) sideloop(fromChainID, fromChainNode, eosChainNode string
 	if eos_err != nil {
 		panic(eos_err)
 	}
-	eos_err := mySigner.ImportPrivateKey("5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3")
+	eos_err = mySigner.ImportPrivateKey("5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3")
 	if eos_err != nil {
 		panic(eos_err)
 	}
@@ -364,7 +364,7 @@ OUTER:
 		c.logger.Info("query chain table", "total", len(sidetransfers))
 		
 		//
-		counter := sidetransfers[0].counter
+		counter := int64(sidetransfers[0].counter)
 		if egressSequence > counter {
 			c.logger.Info("Detected IBC packet", "total", egressSequence - counter)
 		}
@@ -380,8 +380,8 @@ OUTER:
 			}
 			
 			//
-			var retran *Retransfer
-			err := ibcm.cdc.UnmarshalBinary(res, &retran)
+			var retran *ibc.Retransfer
+			err = ibcm.cdc.UnmarshalBinary(res, &retran)
 			if err != nil {
 				panic(err)
 			}
@@ -391,14 +391,14 @@ OUTER:
 			
 			//
 			action := &eos.Action {
-				Account : AN("eosio.token"),
-				Name: ActN("transfer"),
+				Account : eos.AN("eosio.token"),
+				Name: eos.ActN("transfer"),
 				Authorization: []eos.PermissionLevel{
-					{Actor: AN("pegzone"), Permission: PN("active")},
+					{Actor: eos.AN("pegzone"), Permission: eos.PN("active")},
 				},
 				ActionData: eos.NewActionData(token.Transfer{
-					From:     AN("pegzone"),
-					To:       AN(retran.DestAddr),
+					From:     eos.AN("pegzone"),
+					To:       eos.AN(retran.DestAddr),
 					Quantity: quantity,
 					Memo:     "from eos side",
 				}),
