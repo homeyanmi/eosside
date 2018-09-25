@@ -381,14 +381,17 @@ OUTER:
 			
 			//
 			var retran *ibc.Retransfer
-			err = ibcm.cdc.UnmarshalBinary(res, &retran)
+			err = c.cdc.UnmarshalBinary(res, &retran)
 			if err != nil {
 				panic(err)
 			}
 			
 			//
-			quantity := eos.NewAsset(retran.Coins.String())
-			
+			quantity,err := eos.NewAsset(retran.Coins.String())
+			if err != nil {
+				panic(err)
+			}
+						
 			//
 			action := &eos.Action {
 				Account : eos.AN("eosio.token"),
