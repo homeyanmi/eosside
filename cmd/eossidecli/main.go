@@ -56,7 +56,8 @@ func main() {
 	rootCmd.AddCommand(
 		client.PostCommands(
 			bankcmd.SendTxCmd(cdc),
-			app.IBCRelayCmd(cdc),
+			app.EosRelayCmd(cdc),
+			app.SideRelayCmd(cdc),
 			stakecmd.GetCmdCreateValidator(cdc),
 			stakecmd.GetCmdEditValidator(cdc),
 			stakecmd.GetCmdDelegate(cdc),

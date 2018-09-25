@@ -57,6 +57,40 @@ func (ibcm Mapper) SetIngressSequence(ctx sdk.Context, sequence int64) {
 	store.Set(key, bz)
 }
 
+//
+// Stores an outgoing IBC packet under "egress/chain_id/index".
+func EgressKey(index int64) []byte {
+	return []byte(fmt.Sprintf("egress/%d", index))
+}
+
+// Stores the number of outgoing IBC packets under "egress/index".
+func EgressSequenceKey() []byte {
+	return []byte(fmt.Sprintf("egress"))
+}
+
+// Retrieves the index of the currently stored outgoing IBC packets.
+func (ibcm Mapper) GetEgressSequence(store sdk.KVStore) int64 {
+	key := EgressSequenceKey()
+	
+	bz := store.Get(key)
+	if bz == nil {
+		zero := marshalBinaryPanic(ibcm.cdc, int64(0))
+		store.Set(key, zero)
+		return 0
+	}
+	
+	var res int64
+	unmarshalBinaryPanic(ibcm.cdc, bz, &res)
+	return res
+}
+
+func (ibcm Mapper) SetEgressSequence(store sdk.KVStore, sequence int64) {
+	key := EgressSequenceKey()
+
+	bz := marshalBinaryPanic(ibcm.cdc, sequence)
+	store.Set(key, bz)
+}
+
 // --------------------------
 // Functions for accessing the underlying KVStore.
 

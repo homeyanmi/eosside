@@ -19,6 +19,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	eos "github.com/eoscanada/eos-go"
+	token "github.com/eoscanada/eos-go/token"
 	"github.com/blockchain-develop/eosside/x/ibc"
 )
 
@@ -34,6 +35,11 @@ type eostransfer struct {
 	memo string `json:"memo"`
 }
 
+type sidetransfer struct {
+	id uint64 `json:"id"`
+	counter uint64 `json:"id"`
+}
+
 type relayCommander struct {
 	cdc       *wire.Codec
 	//address   sdk.AccAddress
@@ -46,7 +52,7 @@ type relayCommander struct {
 }
 
 // IBC relay command
-func IBCRelayCmd(cdc *wire.Codec) *cobra.Command {
+func EosRelayCmd(cdc *wire.Codec) *cobra.Command {
 	cmdr := relayCommander{
 		cdc:       cdc,
 		decoder:   authcmd.GetAccountDecoder(cdc),
@@ -58,8 +64,8 @@ func IBCRelayCmd(cdc *wire.Codec) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use: "relay",
-		Run: cmdr.runIBCRelay,
+		Use: "eosrelay",
+		Run: cmdr.runEosRelay,
 	}
 
 	cmd.Flags().String(FlagEosChainNode, "http://localhost:8888", "<host>:<port>")
@@ -70,7 +76,7 @@ func IBCRelayCmd(cdc *wire.Codec) *cobra.Command {
 }
 
 // nolint: unparam
-func (c relayCommander) runIBCRelay(cmd *cobra.Command, args []string) {
+func (c relayCommander) runEosRelay(cmd *cobra.Command, args []string) {
 	eosChainNode := viper.GetString(FlagEosChainNode)
 	toChainID := viper.GetString(client.FlagChainID)
 	toChainNode := viper.GetString(client.FlagNode)
@@ -234,6 +240,175 @@ OUTER:
 		}
 	}
 }
+
+
+// IBC relay command
+func SideRelayCmd(cdc *wire.Codec) *cobra.Command {
+	cmdr := relayCommander{
+		cdc:       cdc,
+		decoder:   authcmd.GetAccountDecoder(cdc),
+		ibcStore:  "ibc",
+		mainStore: "main",
+		accStore:  "acc",
+
+		logger: log.NewTMLogger(log.NewSyncWriter(os.Stdout)),
+	}
+
+	cmd := &cobra.Command{
+		Use: "siderelay",
+		Run: cmdr.runSideRelay,
+	}
+
+	cmd.Flags().String(FlagEosChainNode, "http://localhost:8888", "<host>:<port>")
+	cmd.MarkFlagRequired(FlagEosChainNode)
+	viper.BindPFlag(FlagEosChainNode, cmd.Flags().Lookup(FlagEosChainNode))
+
+	return cmd
+}
+
+// nolint: unparam
+func (c relayCommander) runSideRelay(cmd *cobra.Command, args []string) {
+	eosChainNode := viper.GetString(FlagEosChainNode)
+	fromChainID := viper.GetString(client.FlagChainID)
+	fromChainNode := viper.GetString(client.FlagNode)
+
+	c.sideloop(fromChainID, fromChainNode,eosChainNode)
+}
+
+// This is nolinted as someone is in the process of refactoring this to remove the goto
+// nolint: gocyclo
+func (c relayCommander) sideloop(fromChainID, fromChainNode, eosChainNode string) {
+
+	ctx := context.NewCoreContextFromViper()
+	// get password
+	passphrase, err := ctx.GetPassphraseFromStdin(ctx.FromAddressName)
+	if err != nil {
+		panic(err)
+	}
+	
+	//
+	eos_api := eos.New("http://127.0.0.1:8888")
+	eos_info, _ := eos_api.GetInfo()
+	c.logger.Info("eos info", "ServerVersion", eos_info.ServerVersion)
+	c.logger.Info("eos info", "HeadBlockNum", eos_info.HeadBlockNum)
+	
+	//
+	mySigner := eos.NewWalletSigner(eos_api, "xxxx")
+	eos_err := mySigner.ImportPrivateKey("5KM1zpRKMrySAzgitoA3maTeMx12xsGvHdPVgrJXoYsM7hKFKxg")
+	if eos_err != nil {
+		panic(eos_err)
+	}
+	eos_err := mySigner.ImportPrivateKey("5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3")
+	if eos_err != nil {
+		panic(eos_err)
+	}
+	
+	//
+	eos_api.SetSigner(mySigner)
+
+	//
+	egressSequenceKey := ibc.EgressSequenceKey()
+
+OUTER:
+	for {
+		time.Sleep(10 * time.Second)
+
+		//
+		egressSequencebz, err := query(fromChainNode, egressSequenceKey, c.ibcStore)
+		if err != nil {
+			panic(err)
+		}
+
+		var egressSequence int64
+		if egressSequencebz == nil {
+			egressSequence = 0
+		} else if err = c.cdc.UnmarshalBinary(egressSequencebz, &egressSequence); err != nil {
+			panic(err)
+		}
+		
+		log := fmt.Sprintf("query chain eos side, egress : %s, number : %d", egressSequenceKey, egressSequence)
+		c.logger.Info("log", "string", log)
+		
+		
+		//
+		//
+		gettable_request := eos.GetTableRowsRequest {
+			Code: "pegzone",
+			Scope: "pegzone",
+			Table: "retransferinfo",
+		}
+
+		gettable_response, eos_err := eos_api.GetTableRows(gettable_request)
+		if eos_err != nil {
+			c.logger.Info("eos get table failed", "error", eos_err)
+			panic("eos get table failed")
+		}
+
+		c.logger.Info("eos get table successful", "result", gettable_response.Rows)
+		
+		//
+		var sidetransfers []*sidetransfer
+		err_json := gettable_response.BinaryToStructs(&sidetransfers)
+		if err_json != nil {
+			c.logger.Info("eos get table failed", "error", err_json)
+			panic("eos get table failed")
+		}
+
+		/*
+		err_json := c.cdc.UnmarshalJSON(gettable_response.Rows, &transfers)
+		if err_json != nil {
+			panic("eos get table failed")
+		}
+		*/
+		
+		c.logger.Info("query chain table", "total", len(sidetransfers))
+		
+		//
+		counter := sidetransfers[0].counter
+		if egressSequence > counter {
+			c.logger.Info("Detected IBC packet", "total", egressSequence - counter)
+		}
+
+	
+		for i := counter; i < egressSequence; i++ {
+			
+			//
+			res, err := query(fromChainNode, ibc.EgressKey(i), c.ibcStore)
+			if err != nil {
+				c.logger.Error("error querying egress packet", "err", err)
+				continue OUTER // TODO replace to break, will break first loop then send back to the beginning (aka OUTER)
+			}
+			
+			//
+			var retran *Retransfer
+			err := ibcm.cdc.UnmarshalBinary(res, &retran)
+			if err != nil {
+				panic(err)
+			}
+			
+			//
+			quantity := eos.NewAsset(retran.Coins.String())
+			
+			//
+			action := &eos.Action {
+				Account : AN("eosio.token"),
+				Name: ActN("transfer"),
+				Authorization: []eos.PermissionLevel{
+					{Actor: AN("pegzone"), Permission: PN("active")},
+				},
+				ActionData: eos.NewActionData(token.Transfer{
+					From:     AN("pegzone"),
+					To:       AN(retran.DestAddr),
+					Quantity: quantity,
+					Memo:     "from eos side",
+				}),
+			}
+			
+			c.logger.Info("Relayed IBC packet", "index", i)
+		}
+	}
+}
+
 
 func (c relayCommander) getaddress() (addr sdk.AccAddress) {
 	address, err := context.NewCoreContextFromViper().GetFromAddress()

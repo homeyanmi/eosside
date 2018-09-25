@@ -26,12 +26,19 @@ type IBCRelayMsg struct {
 }
 
 const (
-	TRANSFER   	= 1
+	TRANSFER   	= 1,
+	RETRANSFER  = 2,
 )
 
 type Transfer struct {
 	SrcAddr     string
 	DestAddr    sdk.AccAddress
+	Coins       sdk.Coins
+}
+
+type Retransfer struct {
+	SrcAddr     sdk.AccAddress
+	DestAddr    string
 	Coins       sdk.Coins
 }
 
