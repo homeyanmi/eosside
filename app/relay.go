@@ -185,7 +185,7 @@ OUTER:
 
 			//
 			ibc_msg := ibc.Transfer{
-				SrcAddr: eos_from,
+				SrcAddr: string(eos_from),
 				DestAddr: side_to,
 				Coins: coins,
 			}
