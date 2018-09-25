@@ -167,20 +167,20 @@ OUTER:
 			}
 			
 			//
-			eos_from = tran.from
+			eos_from := tran.from
 			
 			//
-			to_addr = tran.memo
+			to_addr := tran.memo
 			side_to, err := sdk.AccAddressFromBech32(to_addr)
 			if err != nil {
-				return nil, err
+				panic("invalid eos side dest address!")
 			}
 			
 			//
-			coinsStr = tran.quantity.String()
+			coinsStr := tran.quantity.String()
 			coins, err := sdk.ParseCoins(coinsStr)
 			if err != nil {
-				return nil, err
+				panic("invalid eos side coins!")
 			}
 
 			//
