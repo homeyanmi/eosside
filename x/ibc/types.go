@@ -30,7 +30,7 @@ const (
 )
 
 type Transfer struct {
-	SrcAddr     []byte
+	SrcAddr     string
 	DestAddr    sdk.AccAddress
 	Coins       sdk.Coins
 }

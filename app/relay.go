@@ -140,46 +140,6 @@ OUTER:
 			c.logger.Info("eos get table failed", "error", err_json)
 			panic("eos get table failed")
 		}
-		
-		{
-			var rows []string
-			err := json.Unmarshal(gettable_response.Rows, &rows)
-			if err != nil {
-				return
-			}
-			
-			for i, row := range rows {
-				c.logger.Info("row", "index", i)
-				c.logger.Info("row", "value", row)
-			}
-		
-			outSlice := reflect.ValueOf(&transfers).Elem()
-			structType := reflect.TypeOf(&transfers).Elem().Elem()
-		
-			for _, row := range rows {
-				bin, err := hex.DecodeString(row)
-				if err != nil {
-					return 
-				}
-		
-				c.logger.Info("row", "bin", bin)
-				
-				// access the type of the `Slice`, create a bunch of them..
-				newStruct := reflect.New(structType)
-		
-				decoder := NewDecoder(bin)
-				if err := decoder.Decode(newStruct.Interface()); err != nil {
-					return 
-				}
-		
-				outSlice = reflect.Append(outSlice, reflect.Indirect(newStruct))
-			}
-		
-			reflect.ValueOf(&transfers).Elem().Set(outSlice)
-		
-			return nil
-		}
-
 
 		/*
 		err_json := c.cdc.UnmarshalJSON(gettable_response.Rows, &transfers)
@@ -202,11 +162,32 @@ OUTER:
 			c.logger.Info("eos transfer", "quantity", tran.quantity.String())
 			c.logger.Info("eos transfer", "memo", tran.memo)
 			
+			if tran.to != eos.AccountName("pegzone") {
+				continue;
+			}
+			
+			//
+			eos_from = tran.from
+			
+			//
+			to_addr = tran.memo
+			side_to, err := sdk.AccAddressFromBech32(to_addr)
+			if err != nil {
+				return nil, err
+			}
+			
+			//
+			coinsStr = tran.quantity.String()
+			coins, err := sdk.ParseCoins(coinsStr)
+			if err != nil {
+				return nil, err
+			}
+
 			//
 			ibc_msg := ibc.Transfer{
-				//SrcAddr: fromChainID,
-				//DestAddr: toChainID,
-				//Coins: from,
+				SrcAddr: eos_from,
+				DestAddr: side_to,
+				Coins: coins,
 			}
 			
 			bz, err_json := c.cdc.MarshalBinary(ibc_msg)
