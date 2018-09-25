@@ -278,13 +278,6 @@ func (c relayCommander) runSideRelay(cmd *cobra.Command, args []string) {
 // This is nolinted as someone is in the process of refactoring this to remove the goto
 // nolint: gocyclo
 func (c relayCommander) sideloop(fromChainID, fromChainNode, eosChainNode string) {
-
-	ctx := context.NewCoreContextFromViper()
-	// get password
-	passphrase, err := ctx.GetPassphraseFromStdin(ctx.FromAddressName)
-	if err != nil {
-		panic(err)
-	}
 	
 	//
 	eos_api := eos.New("http://127.0.0.1:8888")
@@ -406,6 +399,17 @@ OUTER:
 					Memo:     "from eos side",
 				}),
 			}
+			
+			//
+			eos_res, err := eos_api.SignPushActions(action)
+			if err != nil {
+				panic(err)
+			}
+			
+			c.logger.Info("eos transfer result", "StatusCode", eos_res.StatusCode)
+			c.logger.Info("eos transfer result", "TransactionID", eos_res.TransactionID)
+			c.logger.Info("eos transfer result", "BlockID", eos_res.BlockID)
+			c.logger.Info("eos transfer result", "BlockNum", eos_res.BlockNum)
 			
 			c.logger.Info("Relayed IBC packet", "index", i)
 		}
