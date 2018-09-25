@@ -27,11 +27,11 @@ const (
 )
 
 type eostransfer struct {
-	id int64
-	from string
-	to string
-	quantity string
-	memo string
+	id int64 `json:"id"`
+	from eos.AccountName `json:"from"`
+	to eos.AccountName `json:"to"`
+	quantity eos.Asset  `json:"quantity"`
+	memo string `json:"memo"`
 }
 
 type relayCommander struct {
@@ -156,11 +156,11 @@ OUTER:
 
 		for i, tran := range transfers {
 			
-			
+			c.logger.Info("new eos transfer", "new", "xxxxxxx")
 			c.logger.Info("eos transfer", "id", tran.id)
 			c.logger.Info("eos transfer", "from", tran.from)
 			c.logger.Info("eos transfer", "to", tran.to)
-			c.logger.Info("eos transfer", "quantity", tran.quantity)
+			c.logger.Info("eos transfer", "quantity", tran.quantity.String())
 			c.logger.Info("eos transfer", "memo", tran.memo)
 			
 			//
