@@ -35,9 +35,18 @@ type eostransfer struct {
 	memo string `json:"memo"`
 }
 
-type sidetransfer struct {
+type sidereqcount struct {
 	id uint64 `json:"id"`
-	counter uint64 `json:"id"`
+	g_index uint64 `json:"id"`
+}
+
+		
+type transferaction struct {
+	from        string
+	to          eos.AccountName
+	quantity    eos.Asset
+	memo        string
+	index       uint64
 }
 
 type relayCommander struct {
@@ -81,12 +90,12 @@ func (c relayCommander) runEosRelay(cmd *cobra.Command, args []string) {
 	toChainID := viper.GetString(client.FlagChainID)
 	toChainNode := viper.GetString(client.FlagNode)
 
-	c.loop(eosChainNode, toChainID, toChainNode)
+	c.eosloop(eosChainNode, toChainID, toChainNode)
 }
 
 // This is nolinted as someone is in the process of refactoring this to remove the goto
 // nolint: gocyclo
-func (c relayCommander) loop(eosChainNode, toChainID, toChainNode string) {
+func (c relayCommander) eosloop(eosChainNode, toChainID, toChainNode string) {
 
 	ctx := context.NewCoreContextFromViper()
 	// get password
@@ -140,8 +149,8 @@ OUTER:
 		c.logger.Info("eos get table successful", "result", gettable_response.Rows)
 		
 		//
-		var transfers []*eostransfer
-		err_json := gettable_response.BinaryToStructs(&transfers)
+		var eostransfers []*eostransfer
+		err_json := gettable_response.BinaryToStructs(&eostransfers)
 		if err_json != nil {
 			c.logger.Info("eos get table failed", "error", err_json)
 			panic("eos get table failed")
@@ -154,12 +163,12 @@ OUTER:
 		}
 		*/
 		
-		c.logger.Info("query chain table", "total", len(transfers))
+		c.logger.Info("query chain table", "total", len(eostransfers))
 
 		seq := (c.getSequence(toChainNode))
 		//c.logger.Info("broadcast tx seq", "number", seq)
 
-		for i, tran := range transfers {
+		for i, tran := range eostransfers {
 			
 			c.logger.Info("new eos transfer", "new", "xxxxxxx")
 			c.logger.Info("eos transfer", "id", tran.id)
@@ -173,11 +182,11 @@ OUTER:
 			}
 			
 			//
-			eos_from := tran.from
+			from_eos := tran.from
 			
 			//
 			to_addr := tran.memo
-			side_to, err := sdk.AccAddressFromBech32(to_addr)
+			to_side, err := sdk.AccAddressFromBech32(to_addr)
 			if err != nil {
 				panic("invalid eos side dest address!")
 			}
@@ -188,45 +197,31 @@ OUTER:
 			if err != nil {
 				panic("invalid eos side coins!")
 			}
-
-			//
-			ibc_msg := ibc.Transfer{
-				SrcAddr: string(eos_from),
-				DestAddr: side_to,
-				Coins: coins,
-			}
-			
-			bz, err_json := c.cdc.MarshalBinary(ibc_msg)
-			if err_json != nil {
-				panic(err)
-			}
-			
 			
 			// get the from address
 			from, err := ctx.GetFromAddress()
 			if err != nil {
 				panic(err) 
 			}
-			
-			relay_msg := ibc.IBCRelayMsg {
-            	PayloadType: ibc.TRANSFER,
-            	Payload: bz,
-            	Sequence: ingressSequence + int64(i),
-            	Relayer: from,
-            }
+
+			//
+			msg_side := ibc.EosTransferMsg{
+				SrcAddr: string(from_eos),
+				DestAddr: to_side,
+				Coins: coins,
+				Sequence: ingressSequence + int64(i),
+				Relayer: from,
+			}
 			
 			new_ctx := context.NewCoreContextFromViper().WithDecoder(authcmd.GetAccountDecoder(c.cdc)).WithSequence(int64(i))
 			//ctx = ctx.WithNodeURI(viper.GetString(FlagHubChainNode))
 			//ctx := context.NewCoreContextFromViper().WithDecoder(authcmd.GetAccountDecoder(c.cdc))
 			new_ctx, err = new_ctx.Ensure(ctx.FromAddressName)
 			new_ctx = new_ctx.WithSequence(seq)
-			xx_res, err := new_ctx.SignAndBuild(ctx.FromAddressName, passphrase, []sdk.Msg{relay_msg}, c.cdc)
+			xx_res, err := new_ctx.SignAndBuild(ctx.FromAddressName, passphrase, []sdk.Msg{msg_side}, c.cdc)
 			if err != nil {
 				panic(err)
 			}
-
-			//
-			c.logger.Info("broadcast tx, type : transfer, sequence : ", "int", seq)
 			
 			//
 			err = c.broadcastTx(seq, toChainNode, xx_res)
@@ -272,7 +267,7 @@ func (c relayCommander) runSideRelay(cmd *cobra.Command, args []string) {
 	fromChainID := viper.GetString(client.FlagChainID)
 	fromChainNode := viper.GetString(client.FlagNode)
 
-	c.sideloop(fromChainID, fromChainNode,eosChainNode)
+	c.sideloop(fromChainID, fromChainNode, eosChainNode)
 }
 
 // This is nolinted as someone is in the process of refactoring this to remove the goto
@@ -328,7 +323,7 @@ OUTER:
 		gettable_request := eos.GetTableRowsRequest {
 			Code: "pegzone",
 			Scope: "pegzone",
-			Table: "retransferinfo",
+			Table: "sidereqcount",
 		}
 
 		gettable_response, eos_err := eos_api.GetTableRows(gettable_request)
@@ -340,8 +335,8 @@ OUTER:
 		c.logger.Info("eos get table successful", "result", gettable_response.Rows)
 		
 		//
-		var sidetransfers []*sidetransfer
-		err_json := gettable_response.BinaryToStructs(&sidetransfers)
+		var sidereqcounts []*sidereqcount
+		err_json := gettable_response.BinaryToStructs(&sidereqcounts)
 		if err_json != nil {
 			c.logger.Info("eos get table failed", "error", err_json)
 			panic("eos get table failed")
@@ -354,16 +349,23 @@ OUTER:
 		}
 		*/
 		
-		c.logger.Info("query chain table", "total", len(sidetransfers))
+		c.logger.Info("query chain table", "total", len(sidereqcounts))
 		
 		//
-		counter := int64(sidetransfers[0].counter)
-		if egressSequence > counter {
-			c.logger.Info("Detected IBC packet", "total", egressSequence - counter)
+		var index int
+		if len(sidereqcounts) == 0 {
+			index = 0
+		} else {
+			index = int64(sidereqcounts[0].g_index)
+		}
+		
+		//
+		if egressSequence > index {
+			c.logger.Info("Detected IBC packet", "total", egressSequence - index)
 		}
 
 	
-		for i := counter; i < egressSequence; i++ {
+		for i := index; i < egressSequence; i++ {
 			
 			//
 			res, err := query(fromChainNode, ibc.EgressKey(i), c.ibcStore)
@@ -373,30 +375,31 @@ OUTER:
 			}
 			
 			//
-			var retran *ibc.Retransfer
-			err = c.cdc.UnmarshalBinary(res, &retran)
+			var sidetransfer_msg *ibc.SideTransferMsg
+			err = c.cdc.UnmarshalBinary(res, &sidetransfer_msg)
 			if err != nil {
 				panic(err)
 			}
 			
 			//
-			quantity,err := eos.NewAsset(retran.Coins.String())
+			quantity, err := eos.NewAsset(sidetransfer_msg.Coins.String())
 			if err != nil {
 				panic(err)
 			}
 						
 			//
 			action := &eos.Action {
-				Account : eos.AN("eosio.token"),
+				Account : eos.AN("pegzone"),
 				Name: eos.ActN("transfer"),
 				Authorization: []eos.PermissionLevel{
 					{Actor: eos.AN("pegzone"), Permission: eos.PN("active")},
 				},
-				ActionData: eos.NewActionData(token.Transfer{
-					From:     eos.AN("pegzone"),
-					To:       eos.AN(retran.DestAddr),
-					Quantity: quantity,
-					Memo:     "from eos side",
+				ActionData: eos.NewActionData(transferaction{
+					from:     sidetransfer_msg.SrcAddr.String(),
+					to:       eos.AN(sidetransfer_msg.DestAddr),
+					quantity: quantity,
+					memo:     "from eos side",
+					index:    i,
 				}),
 			}
 			

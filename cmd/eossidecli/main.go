@@ -58,6 +58,7 @@ func main() {
 			bankcmd.SendTxCmd(cdc),
 			app.EosRelayCmd(cdc),
 			app.SideRelayCmd(cdc),
+			app.SideTransferCmd(cdc),
 			stakecmd.GetCmdCreateValidator(cdc),
 			stakecmd.GetCmdEditValidator(cdc),
 			stakecmd.GetCmdDelegate(cdc),

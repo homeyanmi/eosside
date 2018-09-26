@@ -14,46 +14,30 @@ func init() {
 }
 
 // ----------------------------------
-// IBCRelayMsg
+// EosTransferMsg
 
 // nolint - TODO rename to TransferMsg as folks will reference with ibc.TransferMsg
 // IBCTransferMsg defines how another module can send an IBCPacket.
-type IBCRelayMsg struct {
-	PayloadType    int64
-	Payload        []byte
+type EosTransferMsg struct {
+	SrcAddr        string
+	DestAddr       sdk.AccAddress
+	Coins          sdk.Coins
 	Sequence       int64
 	Relayer        sdk.AccAddress
 }
 
-const (
-	TRANSFER   	= 1
-	RETRANSFER  = 2
-)
-
-type Transfer struct {
-	SrcAddr     string
-	DestAddr    sdk.AccAddress
-	Coins       sdk.Coins
-}
-
-type Retransfer struct {
-	SrcAddr     sdk.AccAddress
-	DestAddr    string
-	Coins       sdk.Coins
-}
-
 // nolint
-func (msg IBCRelayMsg) Type() string {
+func (msg EosTransferMsg) Type() string {
 	return "ibc"
 }
 
 // x/bank/tx.go MsgSend.GetSigners()
-func (msg IBCRelayMsg) GetSigners() []sdk.AccAddress {
+func (msg EosTransferMsg) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{msg.Relayer}
 }
 
 // get the sign bytes for ibc transfer message
-func (msg IBCRelayMsg) GetSignBytes() []byte {
+func (msg EosTransferMsg) GetSignBytes() []byte {
 	b, err := msgCdc.MarshalJSON(msg)
 	if err != nil {
 		panic(err)
@@ -62,7 +46,44 @@ func (msg IBCRelayMsg) GetSignBytes() []byte {
 }
 
 // validate ibc transfer message
-func (msg IBCRelayMsg) ValidateBasic() sdk.Error {
+func (msg EosTransferMsg) ValidateBasic() sdk.Error {
+	return nil
+}
+
+
+
+// ----------------------------------
+// SideTransferMsg
+
+// nolint - TODO rename to TransferMsg as folks will reference with ibc.TransferMsg
+// IBCTransferMsg defines how another module can send an IBCPacket.
+type SideTransferMsg struct {
+	SrcAddr       sdk.AccAddress
+	DestAddr      string
+	Coins         sdk.Coins
+}
+
+// nolint
+func (msg SideTransferMsg) Type() string {
+	return "ibc"
+}
+
+// x/bank/tx.go MsgSend.GetSigners()
+func (msg SideTransferMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.SrcAddr}
+}
+
+// get the sign bytes for ibc transfer message
+func (msg SideTransferMsg) GetSignBytes() []byte {
+	b, err := msgCdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
+
+// validate ibc transfer message
+func (msg SideTransferMsg) ValidateBasic() sdk.Error {
 	return nil
 }
 

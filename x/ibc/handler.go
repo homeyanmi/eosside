@@ -14,9 +14,12 @@ func NewHandler(ibcm Mapper, ck bank.Keeper) sdk.Handler {
 	logger.Info("IBC msg handler : ", "string", "xxx")
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		switch msg := msg.(type) {
-		case IBCRelayMsg:
-			logger.Info("IBC msg handler : ", "type", "IBCRelayMsg")
-			return handleIBCRelayMsg(ctx, ibcm, ck, msg)
+		case SideTransferMsg:
+			logger.Info("IBC msg handler : ", "type", "TransferMsg")
+			return handleSideTransferMsg(ctx, ibcm, ck, msg)	
+		case EosTransferMsg:
+			logger.Info("IBC msg handler : ", "type", "EosTransferMsg")
+			return handleEosTransferMsg(ctx, ibcm, ck, msg)
 		default:
 			logger.Info("IBC msg handler : ", "type", "default")
 			errMsg := "Unrecognized IBC Msg type: " + reflect.TypeOf(msg).Name()
@@ -26,12 +29,7 @@ func NewHandler(ibcm Mapper, ck bank.Keeper) sdk.Handler {
 }
 
 // IBCTransferMsg deducts coins from the account and creates an egress IBC packet.
-func handleIBCRelayMsg(ctx sdk.Context, ibcm Mapper, ck bank.Keeper, msg IBCRelayMsg) sdk.Result {
-	//
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
-	logger.Info("IBC msg type : ", "string", "IBCRelayMsg")
-	logger.Info("relay msg type : ", "string", msg.PayloadType)
-
+func handleEosTransferMsg(ctx sdk.Context, ibcm Mapper, ck bank.Keeper, msg EosTransferMsg) sdk.Result {
 	//
 	seq := ibcm.GetIngressSequence(ctx)
 	if msg.Sequence != seq {
@@ -39,34 +37,44 @@ func handleIBCRelayMsg(ctx sdk.Context, ibcm Mapper, ck bank.Keeper, msg IBCRela
 	}
 	
 	//
-	ibcm.SetIngressSequence(ctx, seq+1)
-	
-	//
-	switch msg.PayloadType {
-	case TRANSFER:
-	    var transfer *Transfer
-		err := ibcm.cdc.UnmarshalBinary(msg.Payload, &transfer)
-		if err != nil {
-			panic(err)
-		}
-		return handleTransfer(ctx, ibcm, ck, *transfer)
-	default:
-		return sdk.ErrUnknownRequest("unknown ibc relay msg!").Result()
-	}
-}
-
-// IBCReceiveMsg adds coins to the destination address and creates an ingress IBC packet.
-func handleTransfer(ctx sdk.Context, ibcm Mapper, ck bank.Keeper, msg Transfer) sdk.Result {
-
 	_, _, err := ck.AddCoins(ctx, msg.DestAddr, msg.Coins)
 	if err != nil {
 		return err.Result()
 	}
-
+	
+	//
+	ibcm.SetIngressSequence(ctx, seq+1)
+	
 	//
 	return sdk.Result{}
 }
 
+// handleTransferMsg deducts coins from the account and creates an egress IBC packet.
+func handleSideTransferMsg(ctx sdk.Context, ibcm Mapper, ck bank.Keeper, msg SideTransferMsg) sdk.Result {
+	//
+	{
+		_, _, err := ck.SubtractCoins(ctx, msg.SrcAddr, msg.Coins)
+		if err != nil {
+			return err.Result()
+		}
+	}
+    
+	//
+	bz, err := ibcm.cdc.MarshalBinary(msg)
+	if err != nil {
+		return sdk.ErrUnknownRequest("Transfer marshal binary failed!").Result()
+	}
+	
+	// write everything into the state
+	store := ctx.KVStore(ibcm.key)
 
-
-
+	//
+	index = ibcm.GetEgressSequence(store)
+	store.Set(ibcm.EgressKey(index), bz)
+	
+	//
+	ibcm.SetEgressSequence(store, index + 1)
+	
+	//
+	return sdk.Result{}
+}
