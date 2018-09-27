@@ -9,19 +9,19 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	wire "github.com/cosmos/cosmos-sdk/wire"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
-	eos "github.com/eoscanada/eos-go"
 	"github.com/blockchain-develop/eosside/x/ibc"
 )
 
 const (
 	flagEosAccount   = "eos-account"
+	flagAmount = "amount"
 )
 
 // IBC relay command
 func SideTransferCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "transfer",
-		Run: func(cmd *cobar.Command, args []string) error {
+		Run: func(cmd *cobra.Command, args []string) error {
 			ctx := context.NewCoreContextFromViper().WithDecoder(authcmd.GetAccountDecoder(cdc))
 
 			// get the from address

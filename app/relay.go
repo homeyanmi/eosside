@@ -19,7 +19,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	eos "github.com/eoscanada/eos-go"
-	token "github.com/eoscanada/eos-go/token"
 	"github.com/blockchain-develop/eosside/x/ibc"
 )
 
@@ -352,7 +351,7 @@ OUTER:
 		c.logger.Info("query chain table", "total", len(sidereqcounts))
 		
 		//
-		var index int
+		var index int64
 		if len(sidereqcounts) == 0 {
 			index = 0
 		} else {
