@@ -69,8 +69,8 @@ func handleSideTransferMsg(ctx sdk.Context, ibcm Mapper, ck bank.Keeper, msg Sid
 	store := ctx.KVStore(ibcm.key)
 
 	//
-	index = ibcm.GetEgressSequence(store)
-	store.Set(ibcm.EgressKey(index), bz)
+	index := ibcm.GetEgressSequence(store)
+	store.Set(EgressKey(index), bz)
 	
 	//
 	ibcm.SetEgressSequence(store, index + 1)

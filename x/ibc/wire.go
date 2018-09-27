@@ -6,5 +6,6 @@ import (
 
 // Register concrete types on wire codec
 func RegisterWire(cdc *wire.Codec) {
-	cdc.RegisterConcrete(IBCRelayMsg{}, "cosmos-sdk/IBCRelayMsg", nil)
+	cdc.RegisterConcrete(EosTransferMsg{}, "cosmos-sdk/EosTransferMsg", nil)
+	cdc.RegisterConcrete(SideTransferMsg{}, "cosmos-sdk/SideTransferMsg", nil)
 }
