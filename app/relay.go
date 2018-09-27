@@ -398,7 +398,7 @@ OUTER:
 					to:       eos.AN(sidetransfer_msg.DestAddr),
 					quantity: quantity,
 					memo:     "from eos side",
-					index:    i,
+					index:    uint64(i),
 				}),
 			}
 			

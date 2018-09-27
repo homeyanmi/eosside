@@ -21,7 +21,7 @@ const (
 func SideTransferCmd(cdc *wire.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "transfer",
-		Run: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.NewCoreContextFromViper().WithDecoder(authcmd.GetAccountDecoder(cdc))
 
 			// get the from address
@@ -62,7 +62,7 @@ func buildSideTransferMsg(from sdk.AccAddress) (sdk.Msg, error) {
 	
 	//
 	msg := ibc.SideTransferMsg {
-		SrcChain: from,
+		SrcAddr: from,
 		Coins: coins,
 		DestAddr: viper.GetString(flagEosAccount),
 	}
